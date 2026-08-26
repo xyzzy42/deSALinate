@@ -346,6 +346,18 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             pr(f"Print (length {len(ss)})")
             prtext("".join(ss))
 
+        elif op in [OpA.vstrprt, OpA.vstrprtn]:
+            f = data[i]
+            i += 1
+            pr(f"Print {f:02x}")
+
+        elif op == OpA.yes_no:
+            sid, ex = getstr()
+            f = data[i]
+            found.add(sid)
+            i += 1
+            pr(f"Yes/No usr {f:02x} {ex}<{sid:02x}>{strings[sid]}")
+
         elif op in [OpA.usrset, OpA.objset, OpA.intset]:
             f = data[i]
             v = data[i+1]
@@ -359,11 +371,11 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             # Maybe set variable f to the value of variable v?
             pr(f"V Set {op.name[1:4]} {f:02x} = {v:02x}")
 
-        elif op == OpA.vstrmove:
+        elif op in [OpA.vstrmove, OpA.strmove]:
             f = data[i]
             v = data[i+1]
             i += 2
-            pr(f"V strmove {f:02x} {v:02x}")
+            pr(f"{op.name} {f:02x} {v:02x}")
 
         elif op in [OpA.intinc, OpA.intdec]:
             f = data[i]
@@ -458,6 +470,11 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             o = getoffset()  # unused, but we need to decode the length
             pr(f"NOP")
 
+        elif op == OpP.refresh:
+            o = getoffset() + 1
+            jmptarget(o, 'C')
+            pr(f"Refresh? {offstr(o)}")
+
         elif op == OpP.usrmem:
             f = data[i]
             v = data[i+1]
@@ -500,10 +517,14 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             pr(f"Window Open {f:02x}")
 
         # Misc one byte argument actions
-        elif op in [OpA.kpause]:
+        elif op in [OpA.kpause, OpA.upcase, OpA.clearpic]:
             f = data[i]
             i += 1
             pr(f"{op.name} {f:02x}")
+
+        # Misc no argument actions
+        elif op in [OpA.newdata, OpA.inventory, OpA.setup, OpA.create, OpA.more, OpA.nomore, OpA.picon, OpA.picoff]:
+            pr(op.name)
             
         elif op == OpA.play:
             f, ex = getstr()
@@ -524,6 +545,11 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             o = getoffset() + 2
             jmptarget(o, 'B')
             pr(f"Noun is {v:02x} '{voc['noun'][v]}', else goto {offstr(o)}")
+
+        elif op == OpP.picsoff:
+            o = getoffset() + 1
+            jmptarget(o, 'B')
+            pr(f"{op.name}, else goto {offstr(o)}")
 
         elif op == OpA.cast:
             p1 = data[i]
