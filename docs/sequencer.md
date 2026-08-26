@@ -137,6 +137,19 @@ Verb sequences that appear in tests in the code and their apparent meaning:
 | Noun | c2–ce | Names of siblings
 | Noun | 00-0e | Objects that can be in inventory
 
+#### Other Variables
+Some variables seem to have been assigned a common use.  This is probably different for each game.  The ones
+from *Amber* that I've identified:
+
+|Variable|Use|
+|-------:|:--|
+|34|The scene to jump to.  The top level code will use this.  E.g. 0 will cause it to invoke "a:hospital"
+|37|You died if set to 0.
+|3b|Set to 1 when returning from an invoke to indicate a scene has not used the command and a default response should be generated.
+|2d|Location inside scene.
+|2f|Mode: Expert, Novice, and Moron.  Don't know what this actually does.  Expert gives you fewer chances to do the wrong thing.
+
+
 ## Predicates (conditional branches)
 If a predicate is true, it will go to the next instruction.  If it's false, then the offset
 argument is used as an offset to jump.  This is backward from how the conditional jumps in most
