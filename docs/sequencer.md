@@ -133,7 +133,9 @@ Verb sequences that appear in tests in the code and their apparent meaning:
 | Verb | 3f–53 | Neutral: consult, say, discus, ask, why, bluff, admit, speak, tell, bribe, beg, agree, disagree, hello, maybe, answer, argue, persist, explain, flirt, thank |
 | Verb | 58–59 | ally, bargain, negotiate |
 | Lone | 00–09 | Movement: north, south, east, west, up, down, back, away, around
+| Lone | 11-23 | Game commands: save, restore, restart, etc.
 | Noun | c2–ce | Names of siblings
+| Noun | 00-0e | Objects that can be in inventory
 
 ## Predicates (conditional branches)
 If a predicate is true, it will go to the next instruction.  If it's false, then the offset
