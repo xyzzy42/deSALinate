@@ -1,3 +1,7 @@
+# SAL decoding tools
+#
+# Copyright (C) 2026 Trent Piepho <tpiepho@gmail.com>
+#
 from pathlib import Path
 import struct
 import itertools
@@ -174,9 +178,13 @@ LOCATIONS = {
     'INITFLOR': 0x9c03
     }
 
+type BranchType = Literal["C", "G", "B"] | tuple[Literal["S"], int, int]
+# Dict key is branch target address, value is dict with branch origin address and the branch type
+type ComeFrom = dict[int, dict[int, BranchType]]
+
 def decode(strings:list[str], data:bytes, loc=0x0c50, 
-           quiet=False, comefrom:dict[int,set[int]] = {},
-           t=trace(Path("AMB.T")), voc=vocab(Path("AMB.V")), scenes=scenes(Path("AMB.DIB"))) -> dict[int,set[int]]:
+           quiet=False, comefrom:ComeFrom = {},
+           t=trace(Path("AMB.T")), voc=vocab(Path("AMB.V")), scenes=scenes(Path("AMB.DIB"))) -> ComeFrom:
     """ 
     Attempt to decode the sequencer opcodes.
     Pass in the string list and data from scene()'s return value.
@@ -198,14 +206,30 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
 
     found = set()       # Keep track of strings we find used somewhere
 
-    # For keeping track of where jump instructions go to
-    # comefrom:dict[int,set[int]]
-
     i = 0
     offset = 0
     mode = 'P'
     start = True # Start of new sequence
     end = False # End of the sequence
+
+    def prfrom(whence:int, how:BranchType) -> str:
+        nonlocal loc
+        if how == "G":
+            return f"{whence+loc:04x}"
+        elif how == "C":
+            return f"↻{whence+loc:04x}"
+        elif how == "B":
+            return f"⌥{whence+loc:04x}"
+        elif isinstance(how, tuple):
+            if how[0] == 'S':
+                words = VPoS.get(how[1])
+                if words:
+                    if how[2] == -1:
+                        return f"{whence+loc:04x}←??"
+                    return f"{whence+loc:04x}←'{words[how[2]][0]}'"
+                else:
+                    return f"{whence+loc:04x}←{how[2]}"
+        return f"{whence+loc:04x}?"
 
     # Print an instruction.
     def pr(text:str="") -> None:
@@ -220,7 +244,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
         if start: ch = ' '
         else: ch = '|'
         if offset in comefrom:
-            print(f"{ch}     ↙ {" ".join(f'{o+loc:04x}' for o in comefrom[offset])    }")
+            print(f"{ch}     ↙ {" ".join(prfrom(o, b) for o, b in comefrom[offset].items())}")
 
         if start: ch = '⮦'
         elif end: ch = '⮡'
@@ -285,13 +309,13 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
         #return f"{prefix}{base+o:04x} (@{base+o+loc:04x}){note}"
 
     # Mark an address as the target of a jump instruction
-    def jmptarget(o:int, base:Optional[int]=None) -> None:
+    def jmptarget(where:int, what:BranchType, base:Optional[int]=None) -> None:
         nonlocal comefrom
         nonlocal offset
         if base is None: base = offset
-        o += base
-        if o not in comefrom: comefrom[o] = set()
-        comefrom[o].add(offset)
+        where += base
+        if where not in comefrom: comefrom[where] = dict()
+        comefrom[where][offset] = what
 
     while i < len(data):
         b = data[i]
@@ -357,7 +381,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             v = data[i+1]
             i += 2
             o = getoffset() + 3
-            jmptarget(o)
+            jmptarget(o, 'B')
             word = VPoS[f][v] if f in VPoS else ""
             pr(f"Test {op.name[:3]} {f:02x} == {v:02x}, else {offstr(o)} {word}")
 
@@ -366,16 +390,28 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             v = data[i+1]
             i += 2
             o = getoffset() + 3
-            jmptarget(o)
+            jmptarget(o, 'B')
             pr(f"Compare int {f:02x} {op.name[3:]} {v}, else {offstr(o)}")
 
         elif op in [OpP.objroom, OpP.objhave]:
             f = data[i]
             i += 1
             o = getoffset() + 2
-            jmptarget(o)
+            jmptarget(o, 'B')
             word = voc['noun'][f]
             pr(f"{op.name} {f:02x} else {offstr(o)} {word}")
+        elif op in [OpP.vobjhave, OpP.vobjroom]:
+            f = data[i]
+            i += 1
+            o = getoffset() + 2
+            jmptarget(o, 'B')
+            pr(f"{op.name[4:]} obj usr {f:02x}, else {offstr(o)}")
+
+        elif op in [OpA.vobjdrop, OpA.vobjget]:
+            f = data[i]
+            i += 1
+            pr(f"{op.name[4:].capitalize()} obj usr {f:02x}")
+
         elif op == OpP.p_dense:
             f = data[i]
             n = data[i+1]
@@ -387,7 +423,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
                 o += i - offset
                 i += 2
                 dtable.append(o)
-                jmptarget(o)
+                jmptarget(o, ('S', f, j))
             pr(f"Dense usr {f:02x} ({len(dtable)-1} entries)")
             for j, o in enumerate(dtable):
                 prtext(f"{'-' if j == len(dtable)-1 else j} ⇒ {offstr(o)}")
@@ -404,11 +440,11 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
                 i += 1
                 b = i - offset # Base for offset, from start of instruction
                 o = getoffset() + b
-                jmptarget(o)
+                jmptarget(o, ('S', f, v))
                 stable.append((v, o))
             b = i - offset
             default = getoffset() + b
-            jmptarget(default)
+            jmptarget(default, ('S', f, -1))
             pr(f"Sparse usr {f:02x} ({n} entries)")
 
             words = VPoS.get(f)
@@ -428,12 +464,12 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             v2 = data[i+2]
             i += 3
             o = getoffset() + 4
-            jmptarget(o)
+            jmptarget(o, 'B')
             pr(f"Between usr {f:02x} {v:02x}–{v2:02x}, else {offstr(o)}")
 
         elif op == OpA.a_call:
             o = getoffset()
-            jmptarget(o, 0)
+            jmptarget(o, 'C', 0)
             pr(f"Call {offstr(o, 0)}")
             # Not end, it can return to here
             # mode = 'P'
@@ -478,7 +514,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             v = data[i]
             i += 1
             o = getoffset() + 2
-            jmptarget(o)
+            jmptarget(o, 'B')
             # Don't know the meaning of the value
             pr(f"If window {v}, else goto {offstr(o)}")
 
@@ -486,7 +522,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             v = data[i]
             i += 1
             o = getoffset() + 2
-            jmptarget(o)
+            jmptarget(o, 'B')
             pr(f"Noun is {v:02x} '{voc['noun'][v]}', else goto {offstr(o)}")
 
         elif op == OpA.cast:
@@ -510,7 +546,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             mode = 'A' if mode == 'P' else 'P'
         elif b == 0x02:
             o = getoffset() + 1
-            jmptarget(o)
+            jmptarget(o, 'G')
             end = True
             pr(f"Goto {offstr(o)}")
             mode = 'P'
