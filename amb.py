@@ -560,10 +560,11 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
         start = False
 
     # Print strings that never got used
-    unused = set(range(len(strings))) - found
-    if unused:
-        print("Unused strings:")
-        for i in unused: print(f"<{i:02x}>{strings[i]}")
+    if not quiet:
+        unused = set(range(len(strings))) - found
+        if unused:
+            print("Unused strings:")
+            for i in unused: print(f"<{i:02x}>{strings[i]}")
 
     return comefrom
 
