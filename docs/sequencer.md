@@ -103,12 +103,14 @@ re-used in a different scene.
 #### Variables with Words
 Some of the usr variables (perhaps the first 16?) are used in predicates to test for parsed
 words.  It's not clear how the token IDs of words from the last parse end up in variables, and
-if they are aways in the same variables.  It does seem to be consistent.
+if they are aways in the same variables.  It does seem to be consistent.  I suspect the many
+arguments to the `parse` command control what variables the parsed sentence is placed into.
 
 Identified variables and what kind of word they have:
 
 |ID | Type | Part of Sentence |
 |---|-----------|------------------|
+|1  | noun | Subject
 |2  | verb | Predicate
 |6  | noun | 
 |7  | noun | Direct Object
