@@ -153,20 +153,20 @@ positive offset.
 ## Action Opcodes
 |Opcode| Name           | Size | Arguments | Description|
 |:-----|:---------------|:-----|:----------|:-----------|
-|00 | NULL              | 1 | None | Appears to go to the TOP of the file?  Or be a return from an invoke.
-|01 | a_toggle          | 1 | None | Switch to predicate mode
+|00 | NULL              | 1 | - | Appears to go to the TOP of the file?  Or be a return from an invoke.
+|01 | a_toggle          | 1 | - | Switch to predicate mode
 |02 | a_goto            | 2-3 | [Offset] | Unconditional jump by Offset+1.  Seems to implicitly switch to predicate mode?
 |03 | a_invoke          | 2 | [File ID] | Jump to 1st byte of the scene file with File ID (ID matches the .DIB list).
 |04 | a_call            | 2 | [Offset] | Jump to Offset from start of file.  A return goes to the next instruction.  And apparently restores the mode too?
 |05 | cast              | 5 | ?? | Something to do with changing how a word was parsed.
-|06 | create            |
+|06 | create            | 1 | - |
 |07 | intadd            |
 |08 | intdec            |
 |09 | intinc            | 2 | [ID] | Add 1? to integer with ID
 |0a | intset            |
-|0b | more              | 1 |
-|0c | newdata           |
-|0d | nomore            | 1 |
+|0b | more              | 1 | - | Often comes in a pair with `nomore`
+|0c | newdata           | 1 | - | Display `NEWDATA` text file.  Appears to be hardcoded to the specific file name.
+|0d | nomore            | 1 | - | Often comes in a pair with `more`
 |0e | pause             |
 |0f | kpause            | 2 | ?? | Seems to delay and wait for a key.  E.g., after knocking at Flora's door.
 |10 | quit              | 1? | ?? | Leave game
@@ -185,13 +185,13 @@ positive offset.
 |1d | vstrset           | 3 |
 |1e | vusrset           | 3 | [ID]? [Value]? | Set something.  First byte appears to be the id.  Maybe Value is the ID of the source variable?
 |1f | getchar_nowait    |
-|20 | setup             |
+|20 | setup             | 1 | - | Configure game for one or two floppy drives.
 |21 | strget            |
 |22 | strprts           |
 |23 | vstrmove          | 3 |
 |24 | color             |
 |25 | remblank          |
-|26 | upcase            |
+|26 | upcase            | 2 | [??] | Maybe alters the word from token ID argument?
 |27 | flookup           |
 |28 | chucktable        |
 |29 | pattern           |
@@ -200,21 +200,21 @@ positive offset.
 |2c | prepare_to_invoke | 2 | [??] | Doesn't seem to do anything?
 |2d | objset            | 3 |
 |2e | objget            |
-|2f | vobjget           |
+|2f | vobjget           | 2 | [ID] | Get object in variable ID
 |30 | objdrop           |
 |31 | vobjdrop          | 2 | [ID] | Drop object in variable ID
-|32 | inventory         |
+|32 | inventory         | 1 | - | Print inventory.
 |33 | yes_no            | 3 | [String ID] [USR ID] | Print string ID and give the 'Y', 'N', or 'R' prompt.  Store result into register with ID.
 |34 | spareact          |
 |35 | musicoff          |
 |36 | musicon           |
-|37 | picoff            |
-|38 | picon             |
+|37 | picoff            | 1 | - | Disable images.  Clears the screen too.
+|38 | picon             | 1 | - | Enable pictures
 |39 | traceoff          |
 |3a | traceon           |
 |3b | w_open            | 2 | ?? | Something to do with the picture/text window?
 |3c | show              | 4–5 | [X?] [Y] [String ID] | Draw a picture, given the String ID of the image file name.
-|3d | clearpic          | 2 | ?? | Clear image, e.g. when you die.
+|3d | clearpic          | 2 | ?? | Clear image, e.g. when you die.  Argument seems to be related to the value used with ifwind.
 |3e | clearscreen       |
 |3f | play              | 2–3 | [String ID] | Play sound in file given by String ID
 |40 | niplay            |
@@ -245,9 +245,9 @@ positive offset.
 |11 | objroom           | 3 | ?? |
 |12 | vobjroom          |
 |13 | objhave           |
-|14 | vobjhave          | 3 | [ID] [Offset] | Jump Offset+2 if you don't have the object
+|14 | vobjhave          | 3 | [ID] [Offset] | Jump Offset+2 if you don't have the object with the ID in usr variable ID
 |15 | strclose          |
 |16 | loadtable         |
 |17 | patt_init         |
-|18 | ifwind            | 3 | [??] [Offset] | Appears to test the graphics/text window in some way.
+|18 | ifwind            | 3 | [??] [Offset] | Appears to test the graphics/text window in some way.  First argument might be window type?  0 = top, 1 = left?
 |19 | picsoff           |
