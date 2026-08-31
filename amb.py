@@ -207,7 +207,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
     # Seems like variable 2 has the verb and 6 the noun, from the last parse.  Not sure if
     # there's sequencer code to put them there, and it might not always do the same thing, or if
     # that's just where the parser puts them all the time.
-    VPoS = { 2: voc['verb'], 6: voc['noun'], 7: voc['noun'], 11: voc['noun'], 16: voc['loneword'] }
+    VPoS = { 1: voc['noun'], 2: voc['verb'], 3: voc['adverb'], 6: voc['noun'], 7: voc['noun'], 11: voc['noun'], 16: voc['loneword'] }
 
     found = set()       # Keep track of strings we find used somewhere
 
