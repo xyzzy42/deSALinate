@@ -423,6 +423,16 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             jmptarget(o, 'B')
             pr(f"Compare int {f:02x} {op.name[3:]} {v}, else {offstr(o)}")
 
+        elif op in [OpP.strclose]:
+            f = data[i]
+            i += 1
+            sid, ex = getstr()
+            o = i - offset # Location based on start of offset byte
+            o += getoffset()
+            jmptarget(o, 'B')
+            pr(f"Close str {f:02x} to <{ex}{sid:02x}>'{strings[sid]}', else goto {offstr(o)}")
+            found.add(sid)
+
         elif op in [OpP.objroom, OpP.objhave]:
             f = data[i]
             i += 1
