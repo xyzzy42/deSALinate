@@ -598,7 +598,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             p2 = data[i+2]
             v2 = data[i+3]
             i += 4
-            pr(f"Cast usr {v:02x} from {PoSs[p1]} to {PoSs[p2]}")
+            pr(f"Cast usr {v:02x} from {PoSs[p1]} to {PoSs[p2] if p2 < len(PoSs) else "??"}")
 
         elif op == OpA.parse:
             i += 39 # Seems like it's this big?
