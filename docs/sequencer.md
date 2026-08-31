@@ -177,9 +177,9 @@ positive offset.
 |04 | a_call            | 2 | [Offset] | Jump to Offset from start of file.  A return goes to the next instruction.  And apparently restores the mode too?
 |05 | cast              | 5 | ?? | Something to do with changing how a word was parsed.
 |06 | create            | 1 | - |
-|07 | intadd            |
+|07 | intadd            | 3 | [ID] [Value] | Add Value to int variable with ID
 |08 | intdec            |
-|09 | intinc            | 2 | [ID] | Add 1? to integer with ID
+|09 | intinc            | 2 | [ID] | Add 1 to integer variable with ID
 |0a | intset            |
 |0b | more              | 1 | - | Often comes in a pair with `nomore`
 |0c | newdata           | 1 | - | Display `NEWDATA` text file.  Appears to be hardcoded to the specific file name.
@@ -193,9 +193,9 @@ positive offset.
 |14 | strprt            | 2-3 | [String ID] | Print string from scene string table with preceeding newline.
 |15 | strprtn           | 2-3 | [String ID] | Print string, without preceeding newline.
 |16 | strset            |
-|17 | usrrnd            | 4 | [ID] [??] [??] | Store a random value into usr with ID?
+|17 | usrrnd            | 4 | [ID] [Min] [Max] | Store a random value betwene Min and Max, inclusive, into usr var ID
 |18 | usrset            | 3 | [ID] [Value] | Set variable with ID to Value
-|19 | vintadd           |
+|19 | vintadd           | 3 | [ID L] [ID R] | Add the value of int variable R to the int variable L, i.e. L += R
 |1a | vintset           | 3 |
 |1b | vstrprt           | 2 | [ID] | Print word with token in variable usr ID, with newline
 |1c | vstrprtn          | 2 | [ID] | Print word with token in variable usr ID, no newline
@@ -263,8 +263,8 @@ positive offset.
 |12 | vobjroom          |
 |13 | objhave           |
 |14 | vobjhave          | 3 | [ID] [Offset] | Jump Offset+2 if you don't have the object with the ID in usr variable ID
-|15 | strclose          |
 |16 | loadtable         |
+|15 | strclose          | 4-6 | [ID] [String ID] [Offset] | Compare in some way the string in variable ID to string ID, if not "close" jump to offset + 3
 |17 | patt_init         |
 |18 | ifwind            | 3 | [??] [Offset] | Appears to test the graphics/text window in some way.  First argument might be window type?  0 = top, 1 = left?
 |19 | picsoff           |
