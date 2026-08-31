@@ -394,6 +394,12 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             i += 1
             pr(f"{op.name} int {f:02x}")
 
+        elif op in [OpA.vintadd, OpA.intadd]:
+            f = data[i]
+            v = data[i+1]
+            i += 2
+            pr(f"Add int {f:02x} += {"int " if op == OpA.vintadd else ""}{v:02x}")
+
         elif op == OpA.usrrnd:
             f = data[i]
             i += 3
