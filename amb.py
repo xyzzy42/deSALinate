@@ -539,9 +539,17 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             # I think a return goes back to the next instruction
 
         elif op == OpA.show:
-            i += 2
+            v = data[i]
+            i += 1
+            if v & 0x80:
+                # theory is high bit indicates two byte value
+                v = (v & 0x7f) << 8 | data[i]
+                i += 1
+            # high bit here too?
+            f = data[i]
+            i += 1
             p, ex = getstr()
-            pr(f"Show <{ex}{p:02x}> '{strings[p]}'")
+            pr(f"Show {v},{f} <{ex}{p:02x}> '{strings[p]}'")
             found.add(p)
 
         elif op == OpA.w_open:
