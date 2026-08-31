@@ -227,13 +227,13 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             return f"⌥{whence+loc:04x}"
         elif isinstance(how, tuple):
             if how[0] == 'S':
+                if how[2] == -1:
+                    return f"{whence+loc:04x}←??"
                 words = VPoS.get(how[1])
                 if words:
-                    if how[2] == -1:
-                        return f"{whence+loc:04x}←??"
                     return f"{whence+loc:04x}←'{words[how[2]][0]}'"
                 else:
-                    return f"{whence+loc:04x}←{how[2]}"
+                    return f"{whence+loc:04x}←{how[2]:02x}"
         return f"{whence+loc:04x}?"
 
     # Convert string ID to string
@@ -447,7 +447,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
                 o += i - offset
                 i += 2
                 dtable.append(o)
-                jmptarget(o, ('S', f, j))
+                jmptarget(o, ('S', f, j if j != n else -1))
             pr(f"Dense usr {f:02x} ({len(dtable)-1} entries)")
             for j, o in enumerate(dtable):
                 prtext(f"{'-' if j == len(dtable)-1 else j} ⇒ {offstr(o)}")
