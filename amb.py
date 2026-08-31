@@ -668,6 +668,10 @@ def image(file:Path) -> Image.Image:
 
     return i
 
-def image_save(img:Image.Image, filename:str, scale=3) -> None:
+def image_save(img:Image.Image, filename:str, scale=3, keepaspect=True) -> None:
     # Scale up, but correct for CGA aspect ratio of 5:6
-    img.resize((img.size[0] * scale * 5 // 6, img.size[1] * scale), Image.Resampling.LANCZOS).save(filename)
+    if keepaspect:
+        width = img.size[0] * scale
+    else:
+        width = img.size[0] * scale * 5 // 6
+    img.resize((width, img.size[1] * scale), Image.Resampling.LANCZOS).save(filename)
