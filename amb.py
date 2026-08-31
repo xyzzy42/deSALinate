@@ -600,6 +600,18 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             i += 4
             pr(f"Cast usr {v:02x} from {PoSs[p1]} to {PoSs[p2] if p2 < len(PoSs) else "??"}")
 
+        elif op == OpP.loadtable:
+            sid, ex = getstr()
+            o = getoffset() + 2
+            jmptarget(o, 'B')
+            pr(f"Loadtable <{ex}{sid:02x}> '{strings[sid]}', else {offstr(o)}")
+            found.add(sid)
+
+        elif op == OpA.flookup:
+            f = data[i]
+            i += 1
+            pr(f"Flookup {f:02x}")
+
         elif op == OpA.parse:
             i += 39 # Seems like it's this big?
             pr(f"Parse")

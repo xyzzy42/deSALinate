@@ -209,8 +209,8 @@ positive offset.
 |24 | color             |
 |25 | remblank          |
 |26 | upcase            | 2 | [??] | Maybe alters the word from token ID argument?
-|27 | flookup           |
-|28 | chucktable        |
+|27 | flookup           | 2 | [Value] | Lookup and execute code from the `loadtable` table.  The Value relates to what is looked up.
+|28 | chucktable        | 1 | - | Probably drops the table loaded by `loadtable`.
 |29 | pattern           |
 |2a | patt_end          |
 |2b | patt_draw         |
@@ -263,8 +263,8 @@ positive offset.
 |12 | vobjroom          |
 |13 | objhave           |
 |14 | vobjhave          | 3 | [ID] [Offset] | Jump Offset+2 if you don't have the object with the ID in usr variable ID
-|16 | loadtable         |
 |15 | strclose          | 4-6 | [ID] [String ID] [Offset] | Compare in some way the string in variable ID to string ID, if not "close" jump to offset + 3
+|16 | loadtable         | 3 | [ID] [Offset] | Load table for fencing game with name from string ID.  Jump to Offset if loading fails.
 |17 | patt_init         |
 |18 | ifwind            | 3 | [??] [Offset] | Appears to test the graphics/text window in some way.  First argument might be window type?  0 = top, 1 = left?
 |19 | picsoff           |
