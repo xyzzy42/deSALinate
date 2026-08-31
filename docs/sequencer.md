@@ -186,9 +186,9 @@ positive offset.
 |0d | nomore            | 1 | - | Often comes in a pair with `more`
 |0e | pause             |
 |0f | kpause            | 2 | ?? | Seems to delay and wait for a key.  E.g., after knocking at Flora's door.
-|10 | quit              | 1? | ?? | Leave game
-|11 | restore           |
-|12 | save              |
+|10 | quit              | 1 | - | Leave game.  Doesn't return.
+|11 | restore           | 1 | - | Restore a saved game.  Doesn't return.
+|12 | save              | 1 | - | Save the game.  This does return.
 |13 | strmove           |
 |14 | strprt            | 2-3 | [String ID] | Print string from scene string table with preceeding newline.
 |15 | strprtn           | 2-3 | [String ID] | Print string, without preceeding newline.
@@ -214,7 +214,7 @@ positive offset.
 |29 | pattern           |
 |2a | patt_end          |
 |2b | patt_draw         |
-|2c | prepare_to_invoke | 2 | [??] | Doesn't seem to do anything?
+|2c | prepare_to_invoke | 2 | [Value] | Maybe checks which floppy is inserted?  Seems like it sets usr 34 (hardcoded variable?) to Value.  That's used in the main code to select which scene to invoke.  Note that the value in usr 34 is not the same as the value suppled to `invoke` to run the scene.
 |2d | objset            | 3 |
 |2e | objget            |
 |2f | vobjget           | 2 | [ID] | Get object in variable ID
@@ -227,10 +227,10 @@ positive offset.
 |36 | musicon           |
 |37 | picoff            | 1 | - | Disable images.  Clears the screen too.
 |38 | picon             | 1 | - | Enable pictures
-|39 | traceoff          |
-|3a | traceon           |
+|39 | traceoff          | 1 | - | Dsiable sequencer debug trace.
+|3a | traceon           | 1 | - | Enable sequencer debug trace.
 |3b | w_open            | 2 | ?? | Something to do with the picture/text window?
-|3c | show              | 4–5 | [X?] [Y] [String ID] | Draw a picture, given the String ID of the image file name.
+|3c | show              | 4–5 | [X?] [Y] [String ID] | Draw a picture, given the String ID of the image file name.  X, Y might be where to draw it?
 |3d | clearpic          | 2 | ?? | Clear image, e.g. when you die.  Argument seems to be related to the value used with ifwind.
 |3e | clearscreen       |
 |3f | play              | 2–3 | [String ID] | Play sound in file given by String ID
