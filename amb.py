@@ -564,7 +564,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             pr(f"{op.name} {f:02x}")
 
         # Misc no argument actions
-        elif op in [OpA.newdata, OpA.inventory, OpA.setup, OpA.create, OpA.more, OpA.nomore, OpA.picon, OpA.picoff]:
+        elif op in [OpA.newdata, OpA.inventory, OpA.setup, OpA.create, OpA.more, OpA.nomore, OpA.picon, OpA.picoff, OpA.quit, OpA.musicon, OpA.musicoff, OpA.traceon, OpA.traceoff, OpA.restore, OpA.save, OpA.chucktable]:
             pr(op.name)
             
         elif op == OpA.play:
