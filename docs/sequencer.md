@@ -108,14 +108,15 @@ arguments to the `parse` command control what variables the parsed sentence is p
 
 Identified variables and what kind of word they have:
 
-|ID | Type | Part of Sentence |
-|---|-----------|------------------|
-|1  | noun | Subject
-|2  | verb | Predicate
-|6  | noun | 
-|7  | noun | Direct Object
-|11 | noun | Indirect Object
-|16 | loneword |
+|ID     | Type | Part of Sentence |
+|-------|------|------------------|
+|usr 01 | noun | Subject
+|usr 02 | verb | Predicate
+|usr 03 | adverb | Adverb.  E.g., "cut *high*", "thrust *low*"
+|usr 06 | noun | 
+|usr 07 | noun | Direct Object
+|usr 0b | noun | Indirect Object
+|usr 10 | loneword |
 
 #### Word Token ID Order
 The token IDs' of the words are not random.  The verbs appear to be in an order, with "action"
