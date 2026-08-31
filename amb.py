@@ -178,6 +178,11 @@ LOCATIONS = {
     'INITFLOR': 0x9c03
     }
 
+# Strings from "AMB" file.  Referenced from other scenes by setting high bit of string ID.
+GLOBAL_STR = [ 'Try rephrasing this.', 'You cannot go that way.',
+    'You do not have the ', 'You already have the ', 'You do not see that.', 'Dropped.', 'Taken.',
+    "That doesn't help.", 'Your attempt fails.' ]
+
 type BranchType = Literal["C", "G", "B"] | tuple[Literal["S"], int, int]
 # Dict key is branch target address, value is dict with branch origin address and the branch type
 type ComeFrom = dict[int, dict[int, BranchType]]
@@ -230,6 +235,13 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
                 else:
                     return f"{whence+loc:04x}←{how[2]}"
         return f"{whence+loc:04x}?"
+
+    # Convert string ID to string
+    def sidstr(sid:int, ex:str="") -> str:
+        if ex.startswith('!'):
+            if sid < len(GLOBAL_STR):
+                return f"<{ex}{sid:02x}>{GLOBAL_STR[sid]}"
+        return f"<{ex}{sid:02x}>{strings[sid]}"
 
     # Print an instruction.
     def pr(text:str="") -> None:
@@ -341,7 +353,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
                 sid, ex = getstr()
                 found.add(sid)
                 nl = "\n" if len(ss) > 0 and b == 0x14 else ""
-                ss.append(f"{nl}<{ex}{sid:02x}>{strings[sid]}")
+                ss.append(f"{nl}{sidstr(sid, ex)}")
                 b = data[i]
             pr(f"Print (length {len(ss)})")
             prtext("".join(ss))
