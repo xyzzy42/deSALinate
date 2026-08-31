@@ -423,18 +423,23 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             o = getoffset() + 2
             jmptarget(o, 'B')
             word = voc['noun'][f]
-            pr(f"{op.name} {f:02x} else {offstr(o)} {word}")
+            pr(f"{op.name[3:]}? obj {f:02x} else {offstr(o)} {word}")
         elif op in [OpP.vobjhave, OpP.vobjroom]:
             f = data[i]
             i += 1
             o = getoffset() + 2
             jmptarget(o, 'B')
-            pr(f"{op.name[4:]} obj usr {f:02x}, else {offstr(o)}")
+            pr(f"{op.name[4:]}? obj usr {f:02x}, else {offstr(o)}")
 
         elif op in [OpA.vobjdrop, OpA.vobjget]:
             f = data[i]
             i += 1
             pr(f"{op.name[4:].capitalize()} obj usr {f:02x}")
+        elif op in [OpA.objdrop, OpA.objget]:
+            f = data[i]
+            i += 1
+            word = voc['noun'][f]
+            pr(f"{op.name[3:]} obj {f:02x} {word}")
 
         elif op == OpP.p_dense:
             f = data[i]
