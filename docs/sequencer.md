@@ -20,7 +20,7 @@ There are 68 action opcodes, which means the opcode fits into a single byte.  In
 into 7 bits.  There are 91 unique opcodes total, which also fits into 7 bits.  So I can't see
 any reason for the CPU to have two modes so that opcodes can be reused.  It takes 7 bits either way.
 
-To dissassemble the instructions correctly, we need to know both the start byte of the
+To disassemble the instructions correctly, we need to know both the start byte of the
 instruction and the mode the CPU is in when it gets there.  Thankfully, branch instructions
 appear to always switch to predicate mode following the jump, so a sequence of instructions will
 always start in predicate mode.
@@ -47,17 +47,25 @@ There are few common types of arguments for instructions.  Some arguments can be
 bytes, e.g. short offsets vs long offsets.
 
 #### String ID
-It seems like this is only 6-bits.  Sometimes the high bit is set, but this should be stripped.
-Perhaps the high bit means the string is from the `AMB` main file vs the other scene files?
+Use to refer to strings in the scene file's string table, which starts at 0 and goes up.  The ID
+can be one or two bytes.
 
-If the 0x40 bit is set, then the next byte should be used to get the string ID.  Maybe this
-means the ID is larger than 0x40?  E.g., `14 40 4c` means to print string `4c`.  Perhaps the low
-bits of the `0x40` byte should be used?  I've not found a file with more than `0xff` strings to
-see if string 256 should be encoded as `41 00`.
+Only the low 6 bits are used as the ID.  If the high bit is set, it means to use the string
+table from the top level scene, i.e. `AMB`, and not the current string.  Common responses like,
+"Dropped." or "Taken." do this.
+
+If the 0x40 bit is set in the ID, then the next byte should be used to get the string ID.  E.g.,
+`14 40 4c` encods print string `4c`.  This allows IDs larger than 6-bits to be encoded using two
+bytes.
+
+My guess is that the low six bits of the 1st byte are used too, to allow encoding values that
+are more than 8-bits, but none of the scenes have enough strings to need that.  E.g., `4a bc`
+would encode ID `abc`.  This is similar to how more than 8-bit offsets are encoded.
 
 #### Offsets
-Some instructions have jump offsets which appear to be one or two bytes long.  Maybe all offsets
-are variable sized, and it's just rare for conditional branches to need a long jump?
+Some instructions have jump offsets which appear to be one or two bytes long.  I'm not sure if
+all offsets use this format, or if some instructions don't.  But it seems that at least most of
+them do use this format.
 
 If the high bit of the first offset byte is not set, then it's a one byte offset.  If the high
 bit is set, then that byte and the next form the offset (big endian), with the high bit masked
@@ -69,7 +77,8 @@ off.  E.g.:
 : Goto with two byte offset, value is 0x0214.  The 14 is part of the instruction.  
 
 The offset size does not affect the amount the PC is incremented by.  E.g., a goto will advance
-to PC+offset+1 in both one-byte and two-byte forms.
+to PC+offset+1 in both one-byte and two-byte forms.  Another way to describe this is that the
+offset is relative to the 1st byte of the offset and not to the last byte.
 
 I'm not sure if just the high bit is masked off, or the entire high nybble.  Haven't found a
 goto with a jump greater than `0fff` to see what it does.
@@ -84,21 +93,54 @@ even it ultimately it would have fit in a smaller offset.
 
 ## Variables
 There appear to be four different types of variables used: `int`, `usr`, `obj`, and `str`.  
+Opcodes that use variables have the type of the variable in their name, e.g. `intset`, `usrset`,
+and `objset`.
 
+Variables appear to be global, rather than local to a scene file.  But sometimes the same ID
+will get re-used in a different scene for another purpose.  There's a "first run" flag variable
+that gets used by the scene's program to initialize variables used by that scene the first time
+it gets invoked.
+
+#### Objects
 Objects, which seems to be things you can have in your inventory, appear to share the same ID as
 the corresponding nouns.  E.g., the noun with id 0x08 is "money", which is also the ID used to
-put the money carried by the orderly into your inventory.  My guess is objects have flags to
-indicate if you have them in your inventory and also if their appear when you use the `inv`
-command.
+put the money carried by the orderly into your inventory.
+
+My guess is objects have flags to indicate if you have them in your inventory and also if their
+appear when you use the `inv` command.
+
+There are opcodes `objget` and `objdrop` which take only an object ID argument and appear to do
+as the names implies.  But sometimes `objset` is used, which takes both an object ID and a value
+to set it to.  Setting it to zero seems to be the same as dropping the object and 0x40 as
+getting the object.
+
+#### Integer and "usr"
 
 Both `int` and `usr` variables are set to and tested against integer values.  It's not clear if
 the same ID used with int vs usr instructions refers to the same variable or different
 variables.  I think they are different.
 
+While both types store integer values, only the int variables have less than, greater than, etc. 
+comparison opcodes.  `usr` can only be tested for equality.  And only `int` has an add
+instruction.  But `usr` has a "between" comparsion that tests if the value is between two
+values, `int` doesn't have this comparision.  Also the random number instruction stores the
+value into a `usr` variable not an `int`.
+
+There is only an test for equal, not unequal.  This is efficient for minimizing the number of
+opcodes, as both aren't needed.  Jumping over a goto on equal does the same thing as jumping
+where the goto went on unequal.  But it's not efficient for the size of the compiled code, as
+unequal effectively needs two instructions vs one.  In the same way, the full set of >, <, ≥,
+and ≤ aren't needed.  Yet for these, there are all opcodes for all four, rather than the minimum
+number.
+
+#### String
 I'm not sure what `str` variables do.  They don't seem to be used much.
 
-Variables appear to be global, rather than local to a scene file.  But the same ID will get
-re-used in a different scene.
+It appears they can be used to hold the exact words entered in a command and repeat them back. 
+While `usr` variables are used to hold the token ID of parsed words, a `str` variable holds the
+entire string.  The game lexicon usually only stores the first four letters.  So the `str`
+variable is used to repeat back a word you typed while the `usr` variable is used to check what
+word it was by its ID.
 
 #### Variables with Words
 Some of the usr variables (perhaps the first 16?) are used in predicates to test for parsed
@@ -110,13 +152,22 @@ Identified variables and what kind of word they have:
 
 |ID     | Type | Part of Sentence |
 |-------|------|------------------|
+|usr 00 | ??
 |usr 01 | noun | Subject
 |usr 02 | verb | Predicate
 |usr 03 | adverb | Adverb.  E.g., "cut *high*", "thrust *low*"
-|usr 06 | noun | 
+|usr 06 | noun | Not sure about this one
 |usr 07 | noun | Direct Object
 |usr 0b | noun | Indirect Object
+|usr 0c | ??
+|usr 0d | ??
+|usr 0e | ??
+|usr 0f | ??
 |usr 10 | loneword |
+|str 02 | ??
+|str 0b | ??
+|str 0d | ??
+|int 01 | ??
 
 #### Word Token ID Order
 The token IDs' of the words are not random.  The verbs appear to be in an order, with "action"
@@ -124,7 +175,7 @@ verbs in sequence and "conversation" verbs in another.  The friendly, hostile, a
 conversion verbs are also in sequence.  The game logic uses this, e.g. it might check for any
 friendly conversion verb to trigger a path.
 
-Verb sequences that appear in tests in the code and their apparent meaning:
+Word sequences that appear in tests in the code and their apparent meaning:
 
 | Type |Range  | Contents |
 |------|------:|:----------|
@@ -132,7 +183,9 @@ Verb sequences that appear in tests in the code and their apparent meaning:
 | Verb | 2b–35 | Hostile: kill, attack, challenge, accuse, betray, demand, ignore, insult, refuse, threaten |
 | Verb | 36–3e | Friendly: flatter, calm, greet, hug, aid, enlist, join, offer, support |
 | Verb | 3f–53 | Neutral: consult, say, discus, ask, why, bluff, admit, speak, tell, bribe, beg, agree, disagree, hello, maybe, answer, argue, persist, explain, flirt, thank |
+| Verb | 55–57 | Hostile actions: sneer, snarl, spit, shout, yell, swear
 | Verb | 58–59 | ally, bargain, negotiate |
+| Verb | 91–95 | Fencing: parry, thrust, cut, feint, dodge
 | Lone | 00–09 | Movement: north, south, east, west, up, down, back, away, around
 | Lone | 11-23 | Game commands: save, restore, restart, etc.
 | Noun | c2–ce | Names of siblings
@@ -144,22 +197,26 @@ from *Amber* that I've identified:
 
 |Variable|Use|
 |-------:|:--|
-|34|The scene to jump to.  The top level code will use this.  E.g. 0 will cause it to invoke "a:hospital"
-|37|You died if set to 0.
-|3b|Set to 1 when returning from an invoke to indicate a scene has not used the command and a default response should be generated.
-|2d|Location inside scene.
-|2f|Mode: Expert, Novice, and Moron.  Don't know what this actually does.  Expert gives you fewer chances to do the wrong thing.
-
+|usr 33|Scene re-init on restore?
+|usr 34|The scene to jump to.  The top level code will use this.  E.g. 0 will cause it to invoke "a:hospital"
+|usr 3a|Scene init.  First run of scene is 1, scene then sets it to zero after initializing.
+|usr 37|You died if set to 0.
+|usr 38|Set to 1 to restart game.
+|usr 3b|Set to 1 when returning from an invoke to indicate a scene has not used the command and a default response should be generated.
+|usr 2d|Location inside scene.
+|usr 2f|Difficulty Mode: Expert, Novice, and Moron.  Expert gives you fewer chances to do the wrong thing, Moron avoids some things, like fights.
+|usr 3c|Won't let you save if this is nonzero.  Restarting executes 'chucktable' if this is 1.
+|usr 3d|Won't let you save if this is nonzero.
 
 ## Predicates (conditional branches)
 If a predicate is true, it will go to the next instruction.  If it's false, then the offset
 argument is used as an offset to jump.  This is backward from how the conditional jumps in most
-real CPUs work (taking the jump when the condition is met).
+real CPUs are named (taking the jump when the condition is met).
 
 The exact address jumped to (i.e., the base address the offset is from) appears to be based on
 offset 0 corresponding to the first byte with the offset in it, and not the start of the
 instruction nor the byte following the instruction, which would be more efficient.  E.g., in a
-four byte ifeq, the offset byte is at PC+3, so on a false branch the PC will advance to
+four byte `ifeq`, the offset byte is at PC+3, so on a false branch the PC will advance to
 PC+3+offset.
 
 An offset of 0 would jump into the current instruction and so is never used.  This is somewhat
@@ -171,7 +228,7 @@ positive offset.
 ## Action Opcodes
 |Opcode| Name           | Size | Arguments | Description|
 |:-----|:---------------|:-----|:----------|:-----------|
-|00 | NULL              | 1 | - | Appears to go to the TOP of the file?  Or be a return from an invoke.
+|00 | NULL              | 1 | - | Returns from a call or invoke.  There's a stack.  Goes to the TOP of the current file when the stack is empty.
 |01 | a_toggle          | 1 | - | Switch to predicate mode
 |02 | a_goto            | 2-3 | [Offset] | Unconditional jump by Offset+1.  Seems to implicitly switch to predicate mode?
 |03 | a_invoke          | 2 | [File ID] | Jump to 1st byte of the scene file with File ID (ID matches the .DIB list).
