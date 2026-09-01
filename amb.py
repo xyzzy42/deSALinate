@@ -370,18 +370,13 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
             i += 1
             pr(f"Yes/No usr {f:02x} {ex}<{sid:02x}>{strings[sid]}")
 
-        elif op in [OpA.usrset, OpA.objset, OpA.intset]:
+        elif op in [OpA.vusrset, OpA.vintset, OpA.vstrset, OpA.usrset, OpA.objset, OpA.intset]:
             f = data[i]
             v = data[i+1]
             i += 2
-            pr(f"Set {op.name[:3]} {f:02x} = {v:02x}")
-
-        elif op in [OpA.vusrset, OpA.vintset, OpA.vstrset]:
-            f = data[i]
-            v = data[i+1]
-            i += 2
-            # Maybe set variable f to the value of variable v?
-            pr(f"V Set {op.name[1:4]} {f:02x} = {v:02x}")
+            # Get usr, int, str type
+            vartype = op.name[1:4] if op.name[0] == 'v' else op.name[0:3]
+            pr(f"Set {vartype} {f:02x} = {vartype+' ' if op.name[0] == 'v' else ''}{v:02x}")
 
         elif op in [OpA.vstrmove, OpA.strmove]:
             f = data[i]
@@ -392,7 +387,7 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
         elif op in [OpA.intinc, OpA.intdec]:
             f = data[i]
             i += 1
-            pr(f"{op.name} int {f:02x}")
+            pr(f"{op.name[3:]} int {f:02x}")
 
         elif op in [OpA.vintadd, OpA.intadd]:
             f = data[i]
@@ -402,9 +397,10 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
 
         elif op == OpA.usrrnd:
             f = data[i]
+            v = data[i+1]
+            v2 = data[i+2]
             i += 3
-            # Store random number in usr?
-            pr(f"{op.name} usr {f:02x}")
+            pr(f"Random usr {f:02x} = {v}-{v2}")
 
         elif op in [OpP.usreq]:
             f = data[i]
