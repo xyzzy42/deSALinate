@@ -6,18 +6,20 @@ from pathlib import Path
 import struct
 import itertools
 from enum import Enum
-from typing import Literal, Optional, Callable
+from typing import Literal, Optional, Callable, Sequence
 
-def tokens(tokenfile:Path) -> list[str]:
+def tokens(tokenfile:Path) -> Sequence[str]:
     """ Decode .TOK file, return list of tokens. """
     data = tokenfile.read_bytes()
     size, *offsets = struct.unpack_from("<h128h", data)
     start = struct.calcsize("<128h") + 2
     return [data[s+start:e+start-1].decode() for s, e in zip(offsets, offsets[1:] + [size-start])]
 
-def detok(input:bytes, toks:list[str]) -> str:
+def detok(input:bytes, toks:Sequence[str]) -> str:
     """
-    Detokenize a string.  Stops at terminating NUL byte.
+    Detokenize a string.
+    Stops at terminating NUL byte, which means it decodes the first string in
+    `input` and stops.  There can be more data after the first string.
     Needs token list, from tokens(). """
     out = ""
     for b in input:
@@ -30,9 +32,10 @@ def detok(input:bytes, toks:list[str]) -> str:
     # No terminating NUL byte?!
     return out
 
-def scene(file:Path, tokens:list[str]) -> tuple[list[str], bytes, int]:
+def scene(file:Path, tokens:Sequence[str]) -> tuple[Sequence[str], bytes, int]:
     """
     Decode scene file.
+    Needs token tabel for decompressing strings, as returned by `tokens()`.
     Returns detokenized list of strings, scene logic data, and offset of scene instructions in file.
     """
 
@@ -86,6 +89,9 @@ def vocab(file:Path, verbose=False) -> Vocab:
     """
     Decode the .V vocabulary file.
     Print out list if verbose is set.
+    Returns Vocab data.  Each part of speech has a word list.  The word list is indexed by the
+    token ID of the word for a given token ID is a list of words that have that ID (i.e., they
+    are synonyms).
     """
     data = file.read_bytes()
     # First four bytes look like some kind of magic value.
@@ -127,10 +133,11 @@ def vocab(file:Path, verbose=False) -> Vocab:
         pos[max(pos.keys())+1] = ["*UNK*"]
     return ids
 
-def trace(file:Path) -> list[str]:
+def trace(file:Path) -> Sequence[str]:
     """
     Decode the trace debug word list.
     This is used by the game's trace feature to display the sequencer program
+    Returns list of opcode nodes.
     """
     data = file.read_bytes()
 
@@ -148,7 +155,7 @@ def trace(file:Path) -> list[str]:
 
     return [data[i+start:data.index(b'\0', i+start, end)].decode("ASCII") for i in index]
 
-def scenes(file:Path) -> list[str]:
+def scenes(file:Path) -> Sequence[str]:
     """
     Read list of scene files from the .DIB file.
     """
@@ -178,20 +185,23 @@ type BranchType = Literal["C", "G", "B"] | tuple[Literal["S"], int, int]
 # Dict key is branch target address, value is dict with branch origin address and the branch type
 type ComeFrom = dict[int, dict[int, BranchType]]
 
-def decode(strings:list[str], data:bytes, loc=0x0c50, 
+def decode(strings:list[str], data:bytes, loc=0x0, 
            quiet=False, comefrom:ComeFrom = {},
            t=trace(Path("AMB.T")), voc=vocab(Path("AMB.V")), scenes=scenes(Path("AMB.DIB"))) -> ComeFrom:
     """ 
     Attempt to decode the sequencer opcodes.
-    Pass in the string list and data from scene()'s return value.
+    Pass in the string list and the program data from scene()'s return value.
+    The start location offset can be provided so that the instruction addresses match the
+    location in the file or the location in memory when the scene is being run.
 
-    Also uses the trace term list, vocabulary and scene list.
+    Also uses the trace term list, vocabulary and scene list.  These will be read from files if
+    not provided.
 
     Setting quiet will not print anything, but still return the comefrom data.  This allows
     a two pass mode to get backward jump addresses.
     """
 
-    # Seems like there are lists of opcodes, each begins with NULL
+    # Seems like there are two lists of opcodes, each begins with NULL
     aops = t[t.index('NULL', 1):]
     pops = t[:t.index('NULL', 1)]
 
@@ -202,8 +212,8 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
 
     found = set()       # Keep track of strings we find used somewhere
 
-    i = 0
-    offset = 0
+    i = 0 # Current position in data
+    offset = 0 # Start of current instruction
     mode = 'P'
     start = True # Start of new sequence
     end = False # End of the sequence
@@ -634,8 +644,12 @@ def decode(strings:list[str], data:bytes, loc=0x0c50,
 
     return comefrom
 
-def decode2(strings:list[str], data:bytes, loc=0x0c50, 
+def decode2(strings:list[str], data:bytes, loc=0x0, 
             t=trace(Path("AMB.T")), voc=vocab(Path("AMB.V")), scenes=scenes(Path("AMB.DIB"))) -> None:
+    """ Two pass decode.
+    First pass finds all the branch targets, second pass prints the program and annotates
+    branch targets with data from the first pass.
+    """
 
     comefrom = decode(strings, data, loc, quiet=True, t=t, voc=voc, scenes=scenes)
     decode(strings, data, loc, quiet=False, comefrom=comefrom, t=t, voc=voc, scenes=scenes)
