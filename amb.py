@@ -369,7 +369,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             f = data[i]
             found.add(sid)
             i += 1
-            pr(f"Yes/No usr {f:02x} {ex}<{sid:02x}>{strings[sid]}")
+            pr(f"Yes/No usr {f:02x} {sidstr(sid, ex)}")
 
         elif op in [OpA.vusrset, OpA.vintset, OpA.vstrset, OpA.usrset, OpA.objset, OpA.intset]:
             f = data[i]
@@ -427,7 +427,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             o = i - offset # Location based on start of offset byte
             o += getoffset()
             jmptarget(o, 'B')
-            pr(f"Close str {f:02x} to <{ex}{sid:02x}>'{strings[sid]}', else goto {offstr(o)}")
+            pr(f"Close str {f:02x} to {sidstr(sid, ex)}, else goto {offstr(o)}")
             found.add(sid)
 
         elif op in [OpP.objroom, OpP.objhave]:
@@ -546,7 +546,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             f = data[i]
             i += 1
             p, ex = getstr()
-            pr(f"Show {v},{f} <{ex}{p:02x}> '{strings[p]}'")
+            pr(f"Show {v},{f} {sidstr(p, ex)}")
             found.add(p)
 
         elif op == OpA.w_open:
@@ -567,7 +567,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
         elif op == OpA.play:
             f, ex = getstr()
             found.add(f)
-            pr(f"Play sound <{ex}{f:02x}> '{strings[f]}'")
+            pr(f"Play sound {sidstr(f, ex)}")
 
         elif op == OpP.ifwind:
             v = data[i]
@@ -601,7 +601,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             sid, ex = getstr()
             o = getoffset() + 2
             jmptarget(o, 'B')
-            pr(f"Loadtable <{ex}{sid:02x}> '{strings[sid]}', else {offstr(o)}")
+            pr(f"Loadtable {sidstr(sid, ex)}, else {offstr(o)}")
             found.add(sid)
 
         elif op == OpA.flookup:
