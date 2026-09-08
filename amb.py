@@ -169,15 +169,6 @@ OpA = Enum('OpA', [
     'inventory', 'yes_no', 'spareact', 'musicoff', 'musicon', 'picoff', 'picon', 'traceoff', 'traceon', 'w_open',   # 50
     'show', 'clearpic', 'clearscreen', 'play', 'niplay', 'kill_music', 'end_game', 'parse' ])                       # 60
     
-
-# Start of program in RAM.
-# This is not consistent and appears to be where the malloc() in the game finds
-# the next memory block.
-LOCATIONS = {
-    'HOSPITAL': 0x651f,
-    'INITFLOR': 0x9c03
-    }
-
 # Strings from "AMB" file.  Referenced from other scenes by setting high bit of string ID.
 GLOBAL_STR = [ 'Try rephrasing this.', 'You cannot go that way.',
     'You do not have the ', 'You already have the ', 'You do not see that.', 'Dropped.', 'Taken.',
