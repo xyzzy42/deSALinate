@@ -9,7 +9,15 @@ import argparse
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Decode SAL scene file")
+        description="Decode SAL scene file", epilog="""
+Disassembles the SAL program contained in the scene file.
+This needs to vocab, token, and dib file to decode all strings.  The standard file names will be
+used by default for these.
+The location offset can be specified to make the printed addresses match the location in memory
+of the scene in the game.  This depends on where the game allocate some RAM and changes.  The
+default offset will be the location in the scene file.
+"""
+        )
     parser.add_argument("input", help="Input File", type=Path)
     parser.add_argument("-v", "--vocab", help="Vocabulary File", type=Path, default="AMB.V")
     parser.add_argument("-t", "--token", help="Token File", type=Path, default="AMB.TOK")
