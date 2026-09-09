@@ -16,7 +16,8 @@ for a different part of the game logic.
 |usr 43|Kill the orderly in the hospital: 0 = unconscious, 1 = dead
 |usr 21|Gerard's opinion of you at end of ship scene: 3 = hostile, 1 = neutral, 2 = friendly
 |usr 26|Caught stealing Flora's Trumps: 0a = caught, 0b = not caught
-|usr 42|Meet Random with Flora?: 1 = yes
+|usr 41|In scene with Flora: 1 = yes
+|usr 42|In scene with Random: 1 = yes
 
 ## Fencing Game
 My nemesis!  Got mad at the randomness as a kid and stopped playing the game.  As far as I can
