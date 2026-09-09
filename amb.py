@@ -362,7 +362,7 @@ def decode(strings:list[str], data:bytes, loc=0x0,
         elif op in [OpA.vstrprt, OpA.vstrprtn]:
             f = data[i]
             i += 1
-            pr(f"Print {f:02x}")
+            pr(f"Print str {f:02x}")
 
         elif op == OpA.yes_no:
             sid, ex = getstr()
@@ -379,11 +379,17 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             vartype = op.name[1:4] if op.name[0] == 'v' else op.name[0:3]
             pr(f"Set {vartype} {f:02x} = {vartype+' ' if op.name[0] == 'v' else ''}{v:02x}")
 
-        elif op in [OpA.vstrmove, OpA.strmove]:
+        elif op == OpA.strmove:
+            f = data[i]
+            i += 1
+            sid, ex = getstr()
+            found.add(sid)
+            pr(f"Set str {f:02x} = {sidstr(sid, ex)}")
+        elif op == OpA.vstrmove:
             f = data[i]
             v = data[i+1]
             i += 2
-            pr(f"{op.name} {f:02x} {v:02x}")
+            pr(f"Set str {f:02x} = str {v:02x}")
 
         elif op in [OpA.intinc, OpA.intdec]:
             f = data[i]
@@ -420,14 +426,14 @@ def decode(strings:list[str], data:bytes, loc=0x0,
             jmptarget(o, 'B')
             pr(f"Compare int {f:02x} {op.name[3:]} {v}, else {offstr(o)}")
 
-        elif op in [OpP.strclose]:
+        elif op in [OpP.strclose, OpP.streq]:
             f = data[i]
             i += 1
             sid, ex = getstr()
             o = i - offset # Location based on start of offset byte
             o += getoffset()
             jmptarget(o, 'B')
-            pr(f"Close str {f:02x} to {sidstr(sid, ex)}, else goto {offstr(o)}")
+            pr(f"{"Equal" if op == OpP.streq else "Close"} str {f:02x} to {sidstr(sid, ex)}, else goto {offstr(o)}")
             found.add(sid)
 
         elif op in [OpP.objroom, OpP.objhave]:

@@ -247,7 +247,7 @@ positive offset.
 |10 | quit              | 1 | - | Leave game.  Doesn't return.
 |11 | restore           | 1 | - | Restore a saved game.  Doesn't return.
 |12 | save              | 1 | - | Save the game.  This does return.
-|13 | strmove           |
+|13 | strmove           | 3-4 | [ID] [String ID] | Move string with String ID into variable str ID.
 |14 | strprt            | 2-3 | [String ID] | Print string from scene string table with preceeding newline.
 |15 | strprtn           | 2-3 | [String ID] | Print string, without preceeding newline.
 |16 | strset            |
@@ -255,15 +255,15 @@ positive offset.
 |18 | usrset            | 3 | [ID] [Value] | Set variable with ID to Value
 |19 | vintadd           | 3 | [ID L] [ID R] | Add the value of int variable R to the int variable L, i.e. L += R
 |1a | vintset           | 3 |
-|1b | vstrprt           | 2 | [ID] | Print word with token in variable usr ID, with newline
-|1c | vstrprtn          | 2 | [ID] | Print word with token in variable usr ID, no newline
+|1b | vstrprt           | 2 | [ID] | Print word with in variable str ID, with newline
+|1c | vstrprtn          | 2 | [ID] | Print word with in variable str ID, no newline
 |1d | vstrset           | 3 |
 |1e | vusrset           | 3 | [ID]? [Value]? | Set something.  First byte appears to be the id.  Maybe Value is the ID of the source variable?
 |1f | getchar_nowait    |
 |20 | setup             | 1 | - | Configure game for one or two floppy drives.
 |21 | strget            |
 |22 | strprts           |
-|23 | vstrmove          | 3 |
+|23 | vstrmove          | 3 | [ID Dest] [ID Src] | Copy string from str ID Src into str ID dst.
 |24 | color             |
 |25 | remblank          |
 |26 | upcase            | 2 | [??] | Maybe alters the word from token ID argument?
@@ -312,7 +312,7 @@ positive offset.
 |09 | intle             |
 |0a | intlt             | 4 | [ID] [Value] [Offset] | Compare int to value
 |0b | refresh           |
-|0c | streq             |
+|0c | streq             | 4-6 | [ID] [String Id] [Offset] | Compare variable str ID to the string in the string table with String ID.  Jump to Offset if false.
 |0d | usreq             | 4 | [ID] [Value] [Offset] | Test variable == Value, next instruction if true, jump Offset+3 bytes if false
 |0e | usrmem            | 5 | [ID] [Min] [Max] [Offset] | Appears to test if variable is between Min and Max inclusive, jump to Offset+4 if false
 |0f | vusreq            |
